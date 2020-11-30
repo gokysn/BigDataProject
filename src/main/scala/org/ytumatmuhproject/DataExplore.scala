@@ -39,12 +39,15 @@ object DataExplore {
       .count()
       .orderBy(desc("count"))
       .show(50,false)
+
 // null ve string değerler var
+
     dfFromFile.groupBy("listing_url")
       .count()
       .orderBy(desc("count"))
       .show(50,false)
-//null ve alakasız değerler var.
+
+// https içeren değerler gelmeli gerisi uçacak.
     dfFromFile.groupBy("experiences_offered")
       .count()
       .orderBy(desc("count"))
@@ -59,7 +62,7 @@ object DataExplore {
       .count()
       .orderBy(desc("count"))
       .show(50,false)
-
+//https içermeli
     dfFromFile.groupBy("host_name")
       .count()
       .orderBy(desc("count"))
@@ -85,13 +88,6 @@ object DataExplore {
       .orderBy(desc("count"))
       .show(50,false)
 // % içermeyenleri uçur.
-    dfFromFile.groupBy("host_acceptance_rate")
-      .count()
-      .orderBy(desc("count"))
-      .show(50,false)
-
-    // % içermeyenleri uçur.
-
 
     dfFromFile.groupBy("host_is_superhost")
       .count()
@@ -118,7 +114,7 @@ object DataExplore {
       .orderBy(desc("count"))
       .show(50,false)
 
-    // 1.0 içermeyenleri uçur.
+    // .0 içermeyenleri uçur.
 
     dfFromFile.groupBy("host_has_profile_pic")
       .count()
