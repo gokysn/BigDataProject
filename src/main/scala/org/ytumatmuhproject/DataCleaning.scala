@@ -50,7 +50,7 @@ object DataCleaning {
 
 
    val urlFilterdf = filterdf
-      .filter(col("listing_url").contains("https") || col("host_url").contains("https") || col("host_thumbnail_url").contains("https") || col("host_picture_url").contains("https") || col("host_is_superhost").contains("t") || col("host_is_superhost").contains("f") || col("host_has_profile_pic").contains("t") || col("host_has_profile_pic").contains("f") || col("host_identity_verified").contains("t") || col("host_identity_verified").contains("f"))
+      .filter(col("listing_url").contains("https") || col("host_url").contains("users") || col("host_thumbnail_url").contains("https") || col("host_picture_url").contains("https") || col("host_is_superhost").contains("t") || col("host_is_superhost").contains("f") || col("host_has_profile_pic").contains("t") || col("host_has_profile_pic").contains("f") || col("host_identity_verified").contains("t") || col("host_identity_verified").contains("f"))
       .orderBy("host_id")
     println(urlFilterdf.count())
 
@@ -89,7 +89,7 @@ object DataCleaning {
 
     println(roomFilterdf.count())
 
-    val amenitiesdf  = roomFilterdf
+   val amenitiesdf  = roomFilterdf
       .filter(!col("amenities").contains("{}") )
       .orderBy("id")
 
@@ -102,7 +102,11 @@ object DataCleaning {
 
     println(amenities2df.count())
 
-    amenities2df.show(100,false)
+   val filterdate = amenities2df
+     .filter(col("last_scraped").contains("2019"))
+     .orderBy("id")
+
+    filterdate.show(false)
 
 
 
