@@ -102,12 +102,12 @@ object Preprocess {
       sayacForNull += 1
     }*/
 
-    drop
+   /* drop
       .repartition(1)
       .write.format("com.databricks.spark.csv")
       .option("header", "true")
       .option("delimiter", ",")
-      .save("C:/Users/gokys/Desktop/NonNulldataset")
+      .save("C:/Users/gokys/Desktop/NonNulldataset")*/
 
    /* drop.select("host_listings_count")
       .groupBy("host_listings_count")

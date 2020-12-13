@@ -24,7 +24,7 @@ object DataVisualization {
 
     val sc = spark.sparkContext
 
-   val nonNull = spark.read.format("csv")
+    val nonNull = spark.read.format("csv")
       .option("sep", ",")
       .option("header", "true")
       .option("inferSchema", "true")
@@ -32,6 +32,7 @@ object DataVisualization {
 
 
     nonNull.printSchema()
+
 
     val priceCount = nonNull
       .groupBy("month")
@@ -45,92 +46,299 @@ object DataVisualization {
       .groupBy("host_listings_count")
       .count()
 
+    val calculated_host_listings_count = nonNull
+      .groupBy("calculated_host_listings_count")
+      .count()
 
-    // priceCount.show(false)
-    //priceCount.printSchema()
-    Vegas("host_listings_count", width = 500.0, height = 500.0)
-      .withDataFrame(bathroom)
-      .encodeX("host_listings_count", Nom)
+    val availability_365 = nonNull
+      .groupBy("availability_365")
+      .count()
+
+    val accommodates = nonNull
+      .groupBy("accommodates")
+      .count()
+
+    val number_of_reviews = nonNull
+      .groupBy("number_of_reviews")
+      .count()
+
+    val beds = nonNull
+      .groupBy("beds")
+      .count()
+    val bedrooms = nonNull
+      .groupBy("bedrooms")
+      .count()
+
+    val host_total_listings_count = nonNull
+      .groupBy("host_total_listings_count")
+      .count()
+
+    val guests_included = nonNull
+      .groupBy("guests_included")
+      .count()
+
+    val availability_30 = nonNull
+      .groupBy("availability_30")
+      .count()
+
+    val availability_60 = nonNull
+      .groupBy("availability_60")
+      .count()
+
+    val availability_90 = nonNull
+      .groupBy("availability_90")
+      .count()
+
+    val maximum_nights = nonNull
+      .groupBy("maximum_nights")
+      .count()
+
+    val minimum_nights = nonNull
+      .groupBy("minimum_nights")
+      .count()
+
+    Vegas("minimum_nights", width = 600.0, height = 500.0)
+      .withDataFrame(minimum_nights)
+      .encodeX("minimum_nights", Quant)
+      .encodeY("count", Nom)
+      .mark(Bar)
+      .show
+
+    Vegas("maximum_nights", width = 200.0, height = 500.0)
+      .withDataFrame(maximum_nights)
+      .encodeX("maximum_nights", Nom)
       .encodeY("count", Quant)
       .mark(Bar)
       .show
 
-    Vegas("host_listings_count", width = 500.0, height = 500.0)
-      .withDataFrame(bathroom)
-      .encodeX("host_listings_count", Nom)
+    Vegas("availability_90", width = 500.0, height = 500.0)
+      .withDataFrame(availability_90)
+      .encodeX("availability_90", Quant)
       .encodeY("count", Quant)
-      .mark(Area)
+      .mark(Bar)
       .show
 
-    Vegas("host_listings_count", width = 500.0, height = 500.0)
-      .withDataFrame(bathroom)
-      .encodeX("host_listings_count", Nom)
+    Vegas("availability_60", width = 500.0, height = 500.0)
+      .withDataFrame(availability_60)
+      .encodeX("availability_60", Nominal)
       .encodeY("count", Quant)
-      .mark(Line)
+      .mark(Bar)
       .show
 
-    Vegas("host_listings_count", width = 500.0, height = 500.0)
-      .withDataFrame(bathroom)
-      .encodeX("host_listings_count", Nom)
+    Vegas("availability_30", width = 500.0, height = 500.0)
+      .withDataFrame(availability_30)
+      .encodeX("availability_30", Nominal)
+      .encodeY("count", Quant)
+      .mark(Bar)
+      .show
+
+
+    Vegas("guests_included", width = 500.0, height = 500.0)
+      .withDataFrame(guests_included)
+      .encodeX("guests_included", Nominal)
+      .encodeY("count", Quant)
+      .mark(Bar)
+      .show
+
+
+    Vegas("bedrooms", width = 500.0, height = 500.0)
+      .withDataFrame(bedrooms)
+      .encodeX("bedrooms", Nominal)
+      .encodeY("count", Quant)
+      .mark(Bar)
+      .show
+
+    Vegas("beds", width = 500.0, height = 500.0)
+      .withDataFrame(beds)
+      .encodeX("beds", Nominal)
+      .encodeY("count", Quant)
+      .mark(Bar)
+      .show
+
+    Vegas("host_total_listings_count", width = 500.0, height = 580.0)
+      .withDataFrame(host_total_listings_count)
+      .encodeX("host_total_listings_count", Quant)
+      .encodeY("count", Nom)
+      .mark(Bar)
+      .show
+
+    Vegas("number_of_reviews", width = 500.0, height = 500.0)
+      .withDataFrame(number_of_reviews)
+      .encodeX("number_of_reviews", Quant)
       .encodeY("count", Quant)
       .mark(Point)
       .show
 
-    Vegas("Bathrooms", width = 500.0, height = 500.0)
-      .withDataFrame(bathroom)
-      .encodeX("bathrooms", Nom)
+
+    Vegas("accommodates", width = 500.0, height = 500.0)
+      .withDataFrame(accommodates)
+      .encodeX("accommodates", Nominal)
       .encodeY("count", Quant)
       .mark(Bar)
       .show
 
-    Vegas("Bathrooms", width = 500.0, height = 500.0)
-      .withDataFrame(bathroom)
-      .encodeX("bathrooms", Nom)
+    Vegas("availability_365", width = 500.0, height = 500.0)
+      .withDataFrame(availability_365)
+      .encodeX("availability_365", Quant)
       .encodeY("count", Quant)
-      .mark(Area)
+      .mark(Point)
       .show
 
-    Vegas("Bathrooms", width = 500.0, height = 500.0)
-      .withDataFrame(bathroom)
-      .encodeX("bathrooms", Nom)
+
+    Vegas("calculated_host_listings_count", width = 500.0, height = 500.0)
+      .withDataFrame(calculated_host_listings_count)
+      .encodeX("calculated_host_listings_count", Quant)
+      .encodeY("count", Quant)
+      .mark(Line)
+      .show
+
+    Vegas("host_listings_count", width = 500.0, height = 500.0)
+      .withDataFrame(host_listings_count)
+      .encodeX("host_listings_count", Quant)
+      .encodeY("count", Quant)
+      .mark(Bar)
+      .show
+
+    Vegas("host_listings_count", width = 500.0, height = 500.0)
+      .withDataFrame(host_listings_count)
+      .encodeX("host_listings_count", Quant)
       .encodeY("count", Quant)
       .mark(Line)
       .show
 
     Vegas("Bathrooms", width = 500.0, height = 500.0)
       .withDataFrame(bathroom)
-      .encodeX("bathrooms", Nom)
+      .encodeX("bathrooms", Quant)
       .encodeY("count", Quant)
       .mark(Point)
       .show
 
     Vegas("Mont", width = 500.0, height = 500.0)
       .withDataFrame(priceCount)
-      .encodeX("month", Nom)
-      .encodeY("count", Quant)
-      .mark(Bar) // Change to .mark(Area)
-      .show
-
-    Vegas("Mont", width = 500.0, height = 500.0)
-      .withDataFrame(priceCount)
-      .encodeX("month", Nom)
+      .encodeX("month", Quant)
       .encodeY("count", Quant)
       .mark(Area) // Change to .mark(Area)
       .show
 
     Vegas("Mont", width = 500.0, height = 500.0)
       .withDataFrame(priceCount)
-      .encodeX("month", Nom)
+      .encodeX("month", Quant)
       .encodeY("count", Quant)
       .mark(Line) // Change to .mark(Area)
       .show
 
-    Vegas("Mont", width = 500.0, height = 500.0)
-      .withDataFrame(priceCount)
-      .encodeX("month", Nom)
+    /*Vegas("accommodates", width = 500.0, height = 500.0)
+      .withDataFrame(accommodates)
+      .encodeX("accommodates", Nominal)
       .encodeY("count", Quant)
-      .mark(Point) // Change to .mark(Area)
+      .mark(Area)
       .show
 
+    Vegas("accommodates", width = 500.0, height = 500.0)
+      .withDataFrame(accommodates)
+      .encodeX("accommodates", Nominal)
+      .encodeY("count", Quant)
+      .mark(Line)
+      .show
+
+    Vegas("accommodates", width = 500.0, height = 500.0)
+      .withDataFrame(accommodates)
+      .encodeX("accommodates", Nominal)
+      .encodeY("count", Quant)
+      .mark(Point)
+      .show
+
+    Vegas("availability_365", width = 500.0, height = 500.0)
+      .withDataFrame(availability_365)
+      .encodeX("availability_365", Nom)
+      .encodeY("count", Quant)
+      .mark(Bar)
+      .show
+
+    Vegas("availability_365", width = 500.0, height = 500.0)
+      .withDataFrame(availability_365)
+      .encodeX("availability_365", Quant)
+      .encodeY("count", Quant)
+      .mark(Area)
+      .show
+
+    Vegas("availability_365", width = 500.0, height = 500.0)
+      .withDataFrame(availability_365)
+      .encodeX("availability_365", Quant)
+      .encodeY("count", Quant)
+      .mark(Line)
+      .show
+
+
+    Vegas("calculated_host_listings_count", width = 500.0, height = 500.0)
+      .withDataFrame(calculated_host_listings_count)
+      .encodeX("calculated_host_listings_count", Quant)
+      .encodeY("count", Quant)
+      .mark(Bar)
+      .show
+
+    Vegas("calculated_host_listings_count", width = 500.0, height = 500.0)
+      .withDataFrame(calculated_host_listings_count)
+      .encodeX("calculated_host_listings_count", Quant)
+      .encodeY("count", Quant)
+      .mark(Area)
+      .show
+
+    Vegas("calculated_host_listings_count", width = 500.0, height = 500.0)
+      .withDataFrame(calculated_host_listings_count)
+      .encodeX("calculated_host_listings_count", Quant)
+      .encodeY("count", Quant)
+      .mark(Point)
+      .show
+
+    Vegas("host_listings_count", width = 500.0, height = 500.0)
+      .withDataFrame(host_listings_count)
+      .encodeX("host_listings_count", Quant)
+      .encodeY("count", Quant)
+      .mark(Area)
+      .show
+
+    Vegas("host_listings_count", width = 500.0, height = 500.0)
+      .withDataFrame(host_listings_count)
+      .encodeX("host_listings_count", Quant)
+      .encodeY("count", Quant)
+      .mark(Point)
+      .show
+
+    Vegas("Bathrooms", width = 500.0, height = 500.0)
+      .withDataFrame(bathroom)
+      .encodeX("bathrooms", Quant)
+      .encodeY("count", Quant)
+      .mark(Bar)
+      .show
+
+    Vegas("Bathrooms", width = 500.0, height = 500.0)
+      .withDataFrame(bathroom)
+      .encodeX("bathrooms", Quant)
+      .encodeY("count", Quant)
+      .mark(Area)
+      .show
+
+    Vegas("Bathrooms", width = 500.0, height = 500.0)
+      .withDataFrame(bathroom)
+      .encodeX("bathrooms", Quant)
+      .encodeY("count", Quant)
+      .mark(Line)
+      .show
+
+    Vegas("Mont", width = 500.0, height = 500.0)
+      .withDataFrame(priceCount)
+      .encodeX("month", Quant)
+      .encodeY("count", Quant)
+      .mark(Bar) // Change to .mark(Area)
+      .show
+
+
+    Vegas("Mont", width = 500.0, height = 500.0)
+      .withDataFrame(priceCount)
+      .encodeX("month", Quant)
+      .encodeY("count", Quant)
+      .mark(Point) // Change to .mark(Area)
+      .show*/
   }
 }
