@@ -2,12 +2,15 @@ package org.ytumatmuhproject
 
 
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.{SparkSession}
-import org.apache.spark.sql.types.{DoubleType, IntegerType, LongType, StructField, StructType}
-import vegas.sparkExt.VegasSpark
-import vegas.{Bar, Nom, Quant, Vegas}
-import vegas._
+import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.clustering.KMeans
+import org.apache.spark.ml.feature.{MinMaxScaler, OneHotEncoderEstimator, StandardScaler, StringIndexer, VectorAssembler}
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.{asc, col, desc}
+import org.apache.spark.sql.types._
 import vegas.render.WindowRenderer._
+import vegas.sparkExt.VegasSpark
+import vegas.{Bar, Quant, Vegas, _}
 
 
 object OutlierDetection {
@@ -33,9 +36,9 @@ object OutlierDetection {
       .option("inferSchema", "true")
       .load("C:/Users/gokys/Desktop/airbnb/nonNull.csv")
 
-    outlierDetection.printSchema()
+   //outlierDetection.describe().show(false)
 
-    val monthCount = outlierDetection
+   val monthCount = outlierDetection
       .groupBy("month")
       .count()
     monthCount.printSchema()
@@ -46,7 +49,7 @@ object OutlierDetection {
       StructField("count", LongType)))
 
 
-    val selectedMonthDF = monthCount.select("month", "count")
+    val selectedMonthDF = outlierDetection.groupBy("month").count()
     val month_count = spark.createDataFrame(selectedMonthDF.rdd, month_schema)
 
     month_count.describe("count").show()
@@ -63,8 +66,17 @@ object OutlierDetection {
     val monthLowerRange = monthMedianAndQuantiles(0) - (1.5 * monthIQR)
     val monthUpperRange = monthMedianAndQuantiles(2) + (1.5 * monthIQR)
 
-    val monthOutliers = monthCount.filter(s"count < $monthLowerRange or count > $monthUpperRange")
+    val monthOutliers = monthCount.filter(s"count > $monthLowerRange or count < $monthUpperRange")
     monthOutliers.show()
+
+   val month_assembler = new VectorAssembler().setInputCols(Array("count")).setOutputCol("countVectorized")
+   val months_df2 = month_assembler.transform(monthOutliers)
+
+   val months_scaler = new MinMaxScaler().setInputCol("countVectorized").setOutputCol("monthsMinMaxScaling").setMax(1).setMin(0)
+
+   val monthScaler = months_scaler.fit(months_df2)
+   val monthScalerDF = monthScaler.transform(months_df2)
+   monthScalerDF.show(false)
 
     Vegas("month", width = 600.0, height = 500.0)
       .withDataFrame(monthOutliers)
@@ -74,6 +86,12 @@ object OutlierDetection {
       .show
 
     println(monthOutliers.count())
+
+    monthOutliers
+      .repartition (1)
+      .write.format ("com.databricks.spark.csv")
+      .save ("sonuç")
+    
 
     val bedsCount = outlierDetection
       .groupBy("beds")
@@ -108,6 +126,15 @@ object OutlierDetection {
     val bedsOutliers = bedsCount.filter(s"count < $lowerRange or count > $upperRange")
 
     bedsOutliers.show()
+
+   val beds_assembler = new VectorAssembler().setInputCols(Array("count")).setOutputCol("countVectorized")
+   val beds_df2 = beds_assembler.transform(bedsOutliers)
+
+   val beds_scaler = new MinMaxScaler().setInputCol("countVectorized").setOutputCol("bedsMinMaxScaling").setMax(1).setMin(0)
+
+   val scaler = beds_scaler.fit(beds_df2)
+   val scalerDF = scaler.transform(beds_df2)
+   scalerDF.show(false)
 
     println(bedsOutliers.count())
 
@@ -153,6 +180,15 @@ object OutlierDetection {
 
     bathroomOutliers.show()
 
+   val bathroom_assembler = new VectorAssembler().setInputCols(Array("count")).setOutputCol("countVectorized")
+   val bathrooms_df2 = bathroom_assembler.transform(monthOutliers)
+
+   val bathrooms_scaler = new MinMaxScaler().setInputCol("countVectorized").setOutputCol("bathroomsMinMaxScaling").setMax(1).setMin(0)
+
+   val bathroomsScaler = bathrooms_scaler.fit(bathrooms_df2)
+   val bathroomsScalerDF = bathroomsScaler.transform(bathrooms_df2)
+   bathroomsScalerDF.show(false)
+
     println(bathroomOutliers.count())
 
 
@@ -197,6 +233,16 @@ object OutlierDetection {
 
     hostListingsOutliers.show()
 
+   val hostListings_assembler = new VectorAssembler().setInputCols(Array("count")).setOutputCol("countVectorized")
+   val hostListings_df2 = hostListings_assembler.transform(hostListingsOutliers)
+
+   val hostListings_scaler = new MinMaxScaler().setInputCol("countVectorized").setOutputCol("hostListingsMinMaxScaling").setMax(1).setMin(0)
+
+   val hostListingsScaler = hostListings_scaler.fit(hostListings_df2)
+   val hostListingsScalerDF = hostListingsScaler.transform(hostListings_df2)
+
+   hostListingsScalerDF.show(false)
+
     println(hostListingsOutliers.count())
 
 
@@ -238,6 +284,16 @@ object OutlierDetection {
     val calculatedHost = calculated_host_listings_count.filter(s"count < $calculatedHostLowerRange or count > $calculatedHostUpperRange")
     calculatedHost.show()
 
+   val calculatedHost_assembler = new VectorAssembler().setInputCols(Array("count")).setOutputCol("countVectorized")
+   val calculatedHost_df2 = calculatedHost_assembler.transform(calculatedHost)
+
+   val calculatedHost_scaler = new MinMaxScaler().setInputCol("countVectorized").setOutputCol("calculatedHostMinMaxScaling").setMax(1).setMin(0)
+
+   val calculatedHostScaler = calculatedHost_scaler.fit(calculatedHost_df2)
+   val calculatedHostScalerDF = calculatedHostScaler.transform(calculatedHost_df2)
+
+   calculatedHostScalerDF.show(false)
+
     println(calculatedHost.count())
 
     Vegas("calculated_host_listings_count", width = 600.0, height = 500.0)
@@ -277,6 +333,17 @@ object OutlierDetection {
 
     val available_365 = availability_365.filter(s"count < $availability365LowerRange or count > $availability365UpperRange")
     available_365.show()
+
+   val available_365_assembler = new VectorAssembler().setInputCols(Array("count")).setOutputCol("countVectorized")
+   val available_365_df2 = available_365_assembler.transform(available_365)
+
+   val available_365_scaler = new MinMaxScaler().setInputCol("countVectorized").setOutputCol("available365MinMaxScaling").setMax(1).setMin(0)
+
+   val available_365_Scaler = available_365_scaler.fit(available_365_df2)
+   val available_365_ScalerDF = available_365_Scaler.transform(available_365_df2)
+
+   available_365_ScalerDF.show(false)
+
     println(available_365.count())
 
     Vegas("availability_365", width = 900.0, height = 500.0)
@@ -316,6 +383,17 @@ object OutlierDetection {
 
     val available_90 = availability_90.filter(s"count < $availability90LowerRange or count > $availability90UpperRange")
     available_90.show()
+
+   val available_90_assembler = new VectorAssembler().setInputCols(Array("count")).setOutputCol("countVectorized")
+   val available_90_df2 = available_90_assembler.transform(available_90)
+
+   val available_90_scaler = new MinMaxScaler().setInputCol("countVectorized").setOutputCol("available90MinMaxScaling").setMax(1).setMin(0)
+
+   val available_90_Scaler = available_90_scaler.fit(available_90_df2)
+   val available_90_ScalerDF = available_90_Scaler.transform(available_90_df2)
+
+   available_90_ScalerDF.show(false)
+
     println(available_90.count())
 
 
@@ -356,6 +434,17 @@ object OutlierDetection {
 
     val available_60 = availability_60.filter(s"count < $availability60LowerRange or count > $availability60UpperRange")
     available_60.show()
+
+   val available_60_assembler = new VectorAssembler().setInputCols(Array("count")).setOutputCol("countVectorized")
+   val available_60_df2 = available_60_assembler.transform(available_60)
+
+   val available_60_scaler = new MinMaxScaler().setInputCol("countVectorized").setOutputCol("available60MinMaxScaling").setMax(1).setMin(0)
+
+   val available_60_Scaler = available_60_scaler.fit(available_60_df2)
+   val available_60_ScalerDF = available_60_Scaler.transform(available_60_df2)
+
+   available_60_ScalerDF.show(false)
+
     println(available_60.count())
 
 
@@ -397,6 +486,17 @@ object OutlierDetection {
 
     val available_30 = availability_30.filter(s"count < $availability30LowerRange or count > $availability30UpperRange")
     available_30.show()
+
+   val available_30_assembler = new VectorAssembler().setInputCols(Array("count")).setOutputCol("countVectorized")
+   val available_30_df2 = available_30_assembler.transform(available_30)
+
+   val available_30_scaler = new MinMaxScaler().setInputCol("countVectorized").setOutputCol("available30MinMaxScaling").setMax(1).setMin(0)
+
+   val available_30_Scaler = available_30_scaler.fit(available_30_df2)
+   val available_30_ScalerDF = available_30_Scaler.transform(available_30_df2)
+
+   available_30_ScalerDF.show(false)
+
     println(available_30.count())
 
     Vegas("availability_30", width = 600.0, height = 500.0)
@@ -436,6 +536,17 @@ object OutlierDetection {
 
     val accommodatesOutliers = accommodates.filter(s"count < $accommodatesLowerRange or count > $accommodatesUpperRange")
     accommodatesOutliers.show()
+
+   val accommodates_assembler = new VectorAssembler().setInputCols(Array("count")).setOutputCol("countVectorized")
+   val accommodates_df2 = accommodates_assembler.transform(accommodatesOutliers)
+
+   val accommodates_scaler = new MinMaxScaler().setInputCol("countVectorized").setOutputCol("accommodatesMinMaxScaling").setMax(1).setMin(0)
+
+   val accommodates_Scaler = accommodates_scaler.fit(accommodates_df2)
+   val accommodates_ScalerDF = accommodates_Scaler.transform(accommodates_df2)
+
+   accommodates_ScalerDF.show(false)
+
     println(accommodatesOutliers.count())
 
     Vegas("accommodates", width = 600.0, height = 500.0)
@@ -475,6 +586,17 @@ object OutlierDetection {
 
     val numberOfReviewsOutliers = number_of_reviews.filter(s"count < $numberOfReviewsLowerRange or count > $numberOfReviewsUpperRange")
     numberOfReviewsOutliers.show()
+
+   val numberOfReviews_assembler = new VectorAssembler().setInputCols(Array("count")).setOutputCol("countVectorized")
+   val numberOfReviews_df2 = numberOfReviews_assembler.transform(numberOfReviewsOutliers)
+
+   val numberOfReviews_scaler = new MinMaxScaler().setInputCol("countVectorized").setOutputCol("numberOfReviewsMinMaxScaling").setMax(1).setMin(0)
+
+   val numberOfReviews_Scaler = numberOfReviews_scaler.fit(numberOfReviews_df2)
+   val numberOfReviews_ScalerDF = numberOfReviews_Scaler.transform(numberOfReviews_df2)
+
+   numberOfReviews_ScalerDF.show(false)
+
     println(numberOfReviewsOutliers.count())
 
     Vegas("number_of_reviews", width = 600.0, height = 500.0)
@@ -514,6 +636,17 @@ object OutlierDetection {
 
     val bedroomsOutliers = bedrooms.filter(s"count < $bedroomsLowerRange or count > $bedroomsUpperRange")
     bedroomsOutliers.show()
+
+   val bedrooms_assembler = new VectorAssembler().setInputCols(Array("count")).setOutputCol("countVectorized")
+   val bedrooms_df2 = bedrooms_assembler.transform(bedroomsOutliers)
+
+   val bedrooms_scaler = new MinMaxScaler().setInputCol("countVectorized").setOutputCol("bedroomsMinMaxScaling").setMax(1).setMin(0)
+
+   val bedrooms_Scaler = bedrooms_scaler.fit(bedrooms_df2)
+   val bedrooms_ScalerDF = bedrooms_Scaler.transform(bedrooms_df2)
+
+   bedrooms_ScalerDF.show(false)
+
     println(bedroomsOutliers.count())
 
     Vegas("bedrooms", width = 600.0, height = 500.0)
@@ -553,6 +686,17 @@ object OutlierDetection {
 
     val host_total_listings_countOutliers = host_total_listings_count.filter(s"count < $hostTotalListingsLowerRange or count > $hostTotalListingsUpperRange")
     host_total_listings_countOutliers.show()
+
+   val host_total_listings_count_assembler = new VectorAssembler().setInputCols(Array("count")).setOutputCol("countVectorized")
+   val host_total_listings_count_df2 = host_total_listings_count_assembler.transform(host_total_listings_countOutliers)
+
+   val host_total_listings_count_scaler = new MinMaxScaler().setInputCol("countVectorized").setOutputCol("hostTotalListingsCountMinMaxScaling").setMax(1).setMin(0)
+
+   val host_total_listings_count_Scaler = host_total_listings_count_scaler.fit(host_total_listings_count_df2)
+   val host_total_listings_count_ScalerDF = host_total_listings_count_Scaler.transform(host_total_listings_count_df2)
+
+   host_total_listings_count_ScalerDF.show(false)
+
     println(host_total_listings_countOutliers.count())
 
     Vegas("host_total_listings_count", width = 600.0, height = 500.0)
@@ -592,6 +736,17 @@ object OutlierDetection {
 
     val guestsIncludedOutliers = guests_included.filter(s"count < $guestsIncludedLowerRange or count > $guestsIncludedUpperRange")
     guestsIncludedOutliers.show()
+
+   val guestsIncluded_assembler = new VectorAssembler().setInputCols(Array("count")).setOutputCol("countVectorized")
+   val guestsIncluded_assemblerdf2 = guestsIncluded_assembler.transform(guestsIncludedOutliers)
+
+   val guestsIncluded_assemblerdf2scaler = new MinMaxScaler().setInputCol("countVectorized").setOutputCol("guestsIncludedMinMaxScaling").setMax(1).setMin(0)
+
+   val guestsIncluded_assemblerdf2Scaler = guestsIncluded_assemblerdf2scaler.fit(guestsIncluded_assemblerdf2)
+   val guestsIncluded_assemblerdf2ScalerDF = guestsIncluded_assemblerdf2Scaler.transform(guestsIncluded_assemblerdf2)
+
+   guestsIncluded_assemblerdf2ScalerDF.show(false)
+
     println(guestsIncludedOutliers.count())
 
     Vegas("guests_included", width = 600.0, height = 500.0)
@@ -631,6 +786,17 @@ object OutlierDetection {
 
     val maximumNightsOutliers = maximum_nights.filter(s"count < $maximumNightsLowerRange or count > $maximumNightsUpperRange")
     maximumNightsOutliers.show()
+
+   val maximumNights_assembler = new VectorAssembler().setInputCols(Array("count")).setOutputCol("countVectorized")
+   val maximumNights_assemblerdf2 = maximumNights_assembler.transform(maximumNightsOutliers)
+
+   val maximumNights_scaler = new MinMaxScaler().setInputCol("countVectorized").setOutputCol("maximumNightsMinMaxScaling").setMax(1).setMin(0)
+
+   val maximumNights_Scaler = maximumNights_scaler.fit(maximumNights_assemblerdf2)
+   val maximumNights_ScalerDF = maximumNights_Scaler.transform(maximumNights_assemblerdf2)
+
+   maximumNights_ScalerDF.show(false)
+
     println(maximumNightsOutliers.count())
 
     Vegas("maximum_nights", width = 600.0, height = 500.0)
@@ -670,6 +836,17 @@ object OutlierDetection {
 
     val minimumNightsOutliers = minimum_nights.filter(s"count < $minimumNightsLowerRange or count > $minimumNightsUpperRange")
     minimumNightsOutliers.show()
+
+   val minimumNights_assembler = new VectorAssembler().setInputCols(Array("count")).setOutputCol("countVectorized")
+   val minimumNights_assemblerdf2 = minimumNights_assembler.transform(minimumNightsOutliers)
+
+   val minimumNights_scaler = new MinMaxScaler().setInputCol("countVectorized").setOutputCol("minimumNightsMinMaxScaling").setMax(1).setMin(0)
+
+   val minimumNights_Scaler = minimumNights_scaler.fit(minimumNights_assemblerdf2)
+   val minimumNights_ScalerDF = minimumNights_Scaler.transform(minimumNights_assemblerdf2)
+
+   minimumNights_ScalerDF.show(false)
+
     println(minimumNightsOutliers.count())
 
     Vegas("minimum_nights", width = 600.0, height = 500.0)

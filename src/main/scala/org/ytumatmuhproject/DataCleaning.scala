@@ -42,8 +42,6 @@ object DataCleaning {
     dfFromFile.show(20)
 
     println(dfFromFile.count())
-    
-
 
     // Tüm değerleri null olan fieldları  unique olan experiences_offered fieldına göre drop ediyoruz.
 

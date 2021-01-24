@@ -2,12 +2,13 @@ package org.ytumatmuhproject
 
 
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{Dataset, Row, SparkSession}
 import vegas._
 import vegas.render.WindowRenderer._
 import vegas.sparkExt._
 
 object DataVisualization {
+
 
   def main(args: Array[String]): Unit = {
 
@@ -32,7 +33,6 @@ object DataVisualization {
 
 
     nonNull.printSchema()
-
 
     val minimum_nights = nonNull
       .groupBy("minimum_nights")
